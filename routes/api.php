@@ -19,11 +19,16 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::prefix('usuario')->group(function(){
-    Route::post('registrar-se', [App\Http\Controllers\UsuarioController::class, 'registrar']);
-    Route::post('login', [App\Http\Controllers\UsuarioController::class, 'login']);
-    Route::post('logout', [App\Http\Controllers\UsuarioController::class, 'logout']);
-    Route::post('desativar-conta', [App\Http\Controllers\UsuarioController::class, 'desativarConta']);
-    Route::post('foto-upload', [App\Http\Controllers\UsuarioController::class, 'fotoUpload']);
-    Route::post('editar', [App\Http\Controllers\UsuarioController::class, 'editar']);
-    Route::post('perfil', [App\Http\Controllers\UsuarioController::class, 'perfil']);
+    Route::post('registrar', [App\Http\Controllers\UsuarioController::class, 'registrar'])->name('usuario-registrar');
+    Route::post('login', [App\Http\Controllers\UsuarioController::class, 'login'])->name('usuario-login');
+    Route::post('logout', [App\Http\Controllers\UsuarioController::class, 'logout'])->name('usuario-logout');
+    Route::post('foto-upload', [App\Http\Controllers\UsuarioController::class, 'fotoUpload'])->name('usuario-foto-upload');
+    Route::post('desativar-conta', [App\Http\Controllers\UsuarioController::class, 'desativarConta'])->name('usuario-desativar-conta');
+    Route::post('perfil', [App\Http\Controllers\UsuarioController::class, 'perfil'])->name('usuario-perfil');
+    Route::post('editar', [App\Http\Controllers\UsuarioController::class, 'editar'])->name('usuario-editar');
+});
+
+Route::prefix('post')->group(function(){
+    Route::post('create', [App\Http\Controllers\PostController::class, 'create']);
+    
 });

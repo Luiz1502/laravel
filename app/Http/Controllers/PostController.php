@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Post;
 use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
+use App\Models\Post;
+use Illuminate\Http\Request;
+
 
 class PostController extends Controller
 {
@@ -19,9 +21,20 @@ class PostController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
-        //
+        $dados = $request->validate([
+            'description' => 'required|string|max:255'
+        ]);
+        
+        $dados['picture'] = $request['picture'];
+
+        $post = Post::create($dados);
+
+        return response()->json([
+            'message'=>'Postagem realizada!',
+            'post'=> $post,
+        ], 201);
     }
 
     /**
