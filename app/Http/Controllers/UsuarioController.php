@@ -2,120 +2,95 @@
 
 namespace App\Http\Controllers;
 
-
-use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 
 class UsuarioController extends Controller
 {
-   
-    function registrar(Request $request) 
-    {
-        $dados = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed'
-        ]);
+    public function register(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string',
+        'email' => 'required|email|unique:users',
+        'password' => 'required|string|min:6',
+    ]);
 
-        $dados['password'] = bcrypt($dados['password']);
-        $dados['picture'] = 'https://cdn0.iconfinder.com/data/icons/seo-web-4-1/128/Vigor_User-Avatar-Profile-Photo-02-1024.png';
-        $dados['status'] = 'active';
-        $dados['enabled'] = true;
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => bcrypt($request->password),
+        'picture' => 'avatar-placeholder.png',
+    ]);
 
-        $usuario = User::create($dados);
+    return response()->json(['usuario' => $user]);
+}
 
-        $token = $usuario->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'message' => 'Usuário registrado com sucesso.',
-            'user' => $usuario,
-            'token' => $token
-        ], 201);
+public function login(Request $request)
+{
+    if (!auth()->attempt($request->only('email', 'password'))) {
+        return response()->json(['message' => 'Credenciais inválidas'], 401);
     }
 
-    function login(Request $request)
-    {
-        $credenciais = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required'
-        ]);
+    $user = auth()->user();
+    $token = $user->createToken('auth_token')->plainTextToken;
 
-        $usuario = User::where('email', $credenciais['email'])->first();
+    return response()->json([
+        'usuario' => $user,
+        'token' => $token
+    ]);
+}
 
-        if (!$usuario || !\Hash::check($credenciais['password'], $usuario->password)) {
-            return response()->json(['message' => 'Credenciais inválidas'], 401);
-        }
+public function perfil()
+{
+    return response()->json(['usuario' => auth()->user()]);
+}
 
-        $token = $usuario->createToken('auth_token')->plainTextToken;
+public function atualizar(Request $request)
+{
+    $user = auth()->user();
+    $user->update($request->only('name', 'email'));
+    return response()->json(['message' => 'Perfil atualizado com sucesso', 'usuario' => $user]);
+}
 
-        return response()->json([
-            'message' => 'Login realizado com sucesso.',
-            'user' => $usuario,
-            'token' => $token
-        ]);
+public function atualizarSenha(Request $request)
+{
+    $request->validate([
+        'senha_atual' => 'required',
+        'nova_senha' => 'required|confirmed|min:6',
+    ]);
+
+    $user = auth()->user();
+
+    if (!\Hash::check($request->senha_atual, $user->password)) {
+        return response()->json(['message' => 'Senha atual incorreta'], 400);
     }
 
+    $user->password = bcrypt($request->nova_senha);
+    $user->save();
 
-    function logout(Request $request)
-    {
-        $request->user()->currentAccessToken()->delete();
+    return response()->json(['message' => 'Senha alterada com sucesso']);
+}
 
-        return response()->json(['message' => 'Logout realizado com sucesso.']);
-    }
+public function uploadFoto(Request $request)
+{
+    $request->validate(['foto' => 'required|image|max:2048']);
+    $user = auth()->user();
 
+    $nomeArquivo = time() . '_' . $request->foto->getClientOriginalName();
+    $request->foto->move(public_path('src/imagens'), $nomeArquivo);
 
-    function fotoUpload(Request $request)
-    {
-        $request->validate([
-            'picture' => 'required|image|mimes:jpg,jpeg,png|max:2048'
-        ]);
+    $user->picture = $nomeArquivo;
+    $user->save();
 
-        $usuario = $request->user();
-        $path = $request->file('picture')->store('pictures', 'public');
+    return response()->json(['foto_url' => url('src/imagens/' . $nomeArquivo)]);
+}
 
-        $usuario->update(['picture' => $path]);
-
-        return response()->json([
-            'message' => 'Foto enviada com sucesso.',
-            'picture_url' => asset('storage/' . $path)
-        ]);
-    }
-
-
-    function desativarConta(Request $request)
-    {
-        $usuario = $request->user();
-        $usuario->update(['enabled' => false, 'status' => 'inactive']);
-
-        return response()->json(['message' => 'Conta desativada com sucesso.']);
-    }
-
-    function perfil(Request $request)
-    {
-        return response()->json($request->user());
-    }
-
-    function editar(Request $request)
-    {
-        $usuario = $request->user();
-
-        $dados = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $usuario->id,
-            'password' => 'nullable|string|min:6|confirmed'
-        ]);
-
-        if (!empty($dados['password'])) {
-            $dados['password'] = bcrypt($dados['password']);
-        } else {
-            unset($dados['password']);
-        }
-
-        $usuario->update($dados);
-
-        return response()->json([
-            'message' => 'Dados atualizados com sucesso.',
-            'user' => $usuario
-        ]);
-    }
+public function logout()
+{
+    auth()->user()->tokens()->delete();
+    return response()->json(['message' => 'Logout realizado com sucesso']);
+}
 }

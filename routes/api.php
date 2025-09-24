@@ -1,34 +1,28 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UsuarioController;
+use App\Http\Controllers\PostagemController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
-
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// Rotas públicas
+Route::prefix('usuario')->group(function () {
+    Route::post('registrar-se', [UsuarioController::class, 'register']);
+    Route::post('login', [UsuarioController::class, 'login']);
 });
 
-Route::prefix('usuario')->group(function(){
-    Route::post('registrar', [App\Http\Controllers\UsuarioController::class, 'registrar'])->name('usuario-registrar');
-    Route::post('login', [App\Http\Controllers\UsuarioController::class, 'login'])->name('usuario-login');
-    Route::post('logout', [App\Http\Controllers\UsuarioController::class, 'logout'])->name('usuario-logout');
-    Route::post('foto-upload', [App\Http\Controllers\UsuarioController::class, 'fotoUpload'])->name('usuario-foto-upload');
-    Route::post('desativar-conta', [App\Http\Controllers\UsuarioController::class, 'desativarConta'])->name('usuario-desativar-conta');
-    Route::post('perfil', [App\Http\Controllers\UsuarioController::class, 'perfil'])->name('usuario-perfil');
-    Route::post('editar', [App\Http\Controllers\UsuarioController::class, 'editar'])->name('usuario-editar');
-});
+// Rotas protegidas
+Route::middleware('auth:sanctum')->group(function () {
 
-Route::prefix('post')->group(function(){
-    Route::post('create', [App\Http\Controllers\PostController::class, 'create']);
-    
+    Route::prefix('usuario')->group(function () {
+        Route::get('perfil', [UsuarioController::class, 'perfil']);
+        Route::put('atualizar', [UsuarioController::class, 'atualizar']);
+        Route::put('alterar-senha', [UsuarioController::class, 'atualizarSenha']);
+        Route::post('upload-foto', [UsuarioController::class, 'uploadFoto']);
+        Route::post('logout', [UsuarioController::class, 'logout']);
+    });
+
+    Route::prefix('postagens')->group(function () {
+        Route::get('/', [PostagemController::class, 'index']);
+        Route::post('criar', [PostagemController::class, 'store']);
+    });
 });

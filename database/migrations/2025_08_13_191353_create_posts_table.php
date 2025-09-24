@@ -13,9 +13,14 @@ return new class extends Migration
     {
         Schema::create('posts', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('user_id'); // Relacionamento com users
+            $table->text('conteudo'); // Conteúdo da postagem
+            $table->string('description', 255)->nullable(); // Descrição opcional
+            $table->string('picture', 255)->nullable(); // Foto da postagem opcional
             $table->timestamps();
-            $table->string('description', 255);
-            $table->string('picture', 255);
+
+            // Foreign key para garantir integridade referencial
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

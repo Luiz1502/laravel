@@ -15,12 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('picture', 255);
-            $table->string('status', 15);
-            $table->string('enabled', 15);
-            $table->rememberToken();
+            $table->string('picture')->default('avatar-placeholder.png'); // Foto padrão
+            $table->string('status')->default('ativo'); // Status padrão
             $table->timestamps();
         });
     }
